@@ -1,0 +1,53 @@
+version: "3"
+services:
+  admin:
+    build:
+      context: ./admin/
+      dockerfile: Dockerfile
+    image: admin-custom
+    restart: always
+    ports:
+        - "80:3000"
+    stdin_open: true
+    working_dir: /admin/
+    volumes:
+      - ./admin:/usr/src/app
+    entrypoint: ["npm", "start"]
+    links:
+      - backend
+    networks:
+      - webappnetwork
+  backend:
+    build:
+      context: ./backend/
+      dockerfile: Dockerfile
+    image: backend-custom
+    restart: always
+    ports:
+      - "4000:4000"
+    working_dir: /backend
+    volumes:
+      - ./backend:/backend
+      - /backend/node_modules
+    entrypoint: ["npm", "start"]
+    depends_on:
+      - postgres
+    networks:
+      - webappnetwork
+  postgres:
+    image: postgres:12.4-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: dev
+    networks:
+      - webappnetwork
+networks:
+  webappnetwork:
+    driver: bridge
